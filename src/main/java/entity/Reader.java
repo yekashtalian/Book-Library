@@ -1,20 +1,27 @@
 package entity;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Reader {
-  private static final AtomicLong count = new AtomicLong(0);
-  private final long id;
-  private final String name;
-
-  public Reader(String name) {
-    this.id = count.incrementAndGet();
+  private long id;
+  private String name;
+  public Reader(String name){
     this.name = name;
   }
+  public Reader(){
 
-  public long getId() {
-    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setId(long id) {
+    this.id = id;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   @Override
