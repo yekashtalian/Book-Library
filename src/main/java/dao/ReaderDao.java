@@ -11,4 +11,5 @@ public interface ReaderDao {
   Optional<Reader> findById(long id);
 
   List<Reader> findAll();
+  Optional<Reader> findReaderByBookId(long bookId);
 }

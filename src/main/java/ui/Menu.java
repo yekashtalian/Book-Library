@@ -2,6 +2,7 @@ package ui;
 
 import entity.Book;
 import entity.Reader;
+import exception.DbUtilOperationException;
 import exception.LibraryServiceException;
 import service.LibraryService;
 
@@ -50,6 +51,9 @@ public class Menu {
         }
       } catch (LibraryServiceException ex) {
         System.err.println(ex.getMessage());
+      }catch (DbUtilOperationException ex){
+        System.err.println(ex.getMessage());
+        System.exit(0);
       }
       System.out.println(SEPARATOR);
     }

@@ -32,13 +32,7 @@ public class LibraryService {
     var bookId = Long.parseLong(bookIdToCheck.trim());
     bookDao.findById(bookId).orElseThrow(() -> new LibraryServiceException(BOOK_NOT_FOUND));
 
-    var readerId = bookDao.findReaderIdByBookId(bookId);
-    if (readerId == 0L) {
-      return Optional.empty();
-    }
-    readerDao.findById(readerId).orElseThrow(() -> new LibraryServiceException(READER_NOT_FOUND));
-
-    return readerDao.findById(readerId);
+    return readerDao.findReaderByBookId(bookId);
   }
 
   public List<Book> showBorrowedBooks(String readerIdToCheck) {
@@ -73,22 +67,27 @@ public class LibraryService {
     String[] ids = bookIdAndReaderId.split("/");
     var bookId = Long.parseLong(ids[0].trim());
     var readerId = Long.parseLong(ids[1].trim());
-    readerDao.findById(readerId).orElseThrow(() -> new LibraryServiceException(READER_NOT_FOUND));
-    if (bookDao.findReaderIdByBookId(bookId) != 0) {
-      throw new LibraryServiceException("Cannot borrow already borrowed Book!");
-    }
 
-    bookDao.borrowBook(bookId, readerId);
+    bookDao.findById(bookId).orElseThrow(() -> new LibraryServiceException(BOOK_NOT_FOUND));
+    readerDao.findById(readerId).orElseThrow(() -> new LibraryServiceException(READER_NOT_FOUND));
+    readerDao
+        .findReaderByBookId(bookId)
+        .ifPresent(
+            reader -> {
+              throw new LibraryServiceException("Cannot borrow already borrowed Book!");
+            });
+
+    bookDao.borrow(bookId, readerId);
   }
 
   public void returnBookToLibrary(String bookIdToReturn) {
     validator.validateSingleId(bookIdToReturn);
 
     var bookId = Long.parseLong(bookIdToReturn.trim());
-    if (bookDao.findReaderIdByBookId(bookId) == 0L) {
+    bookDao.findById(bookId).orElseThrow(() -> new LibraryServiceException(BOOK_NOT_FOUND));
+    if (readerDao.findReaderByBookId(bookId).equals(Optional.empty())) {
       throw new LibraryServiceException("Cannot return Book. Book is already in the Library!");
     }
-
-    bookDao.returnBookToLibrary(bookId);
+    bookDao.returnBook(bookId);
   }
 }

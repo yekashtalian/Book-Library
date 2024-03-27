@@ -8,15 +8,13 @@ import java.util.Optional;
 public interface BookDao {
   Book save(Book bookToSave);
 
-  void returnBookToLibrary(long bookId);
+  void returnBook(long bookId);
 
   Optional<Book> findById(long id);
 
   List<Book> findAll();
 
-  void borrowBook(long bookId, long readerId);
+  void borrow(long bookId, long readerId);
 
   List<Book> findAllByReaderId(long readerId);
-
-  Long findReaderIdByBookId(long bookId);
 }

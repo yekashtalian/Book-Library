@@ -4,29 +4,41 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Book {
-  private static final AtomicLong count = new AtomicLong(0);
-  private final long id;
-  private final String name;
-  private final String author;
+  private long id;
+  private String name;
+  private  String author;
   private long readerId;
 
   public Book(String name, String author) {
-    this.id = count.incrementAndGet();
     this.name = name;
     this.author = author;
-    readerId = 0;
   }
 
-  public long getId() {
-    return id;
-  }
-
-  public long getReaderId() {
-    return readerId;
+  public Book() {
   }
 
   public void setReaderId(long readerId) {
     this.readerId = readerId;
+  }
+
+  public void setId(long id) {
+    this.id = id;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setAuthor(String author) {
+    this.author = author;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getAuthor() {
+    return author;
   }
 
   @Override
