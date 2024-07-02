@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 public class LibraryService {
   private static final String BOOK_NOT_FOUND = "This Book ID doesn't exist!";
   private static final String READER_NOT_FOUND = "This Reader ID doesn't exist!";
-  private final BookDao bookDao;
-  private final ReaderDao readerDao;
+  private BookDao bookDao;
+  private ReaderDao readerDao;
 
   public LibraryService(BookDao bookDao, ReaderDao readerDao) {
     this.bookDao = bookDao;

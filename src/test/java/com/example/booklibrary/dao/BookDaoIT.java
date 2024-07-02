@@ -1,19 +1,32 @@
 package com.example.booklibrary.dao;
 
-import com.example.booklibrary.entity.Book;
-import com.example.booklibrary.entity.Reader;
-import integration.IntegrationTestBase;
-import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.util.*;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class BookDaoIT extends IntegrationTestBase {
-  private final BookDao bookDao = new BookDaoImpl();
-  private final ReaderDao readerDao = new ReaderDaoImpl();
+import com.example.booklibrary.entity.Book;
+import com.example.booklibrary.entity.Reader;
+import java.util.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.jdbc.Sql;
+
+@JdbcTest
+@Sql(scripts = "classpath:db/schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
+@ComponentScan
+class BookDaoIT {
+  @Autowired private BookDao bookDao;
+  @Autowired private ReaderDao readerDao;
+  @Autowired private JdbcTemplate jdbcTemplate;
+
+  @BeforeEach
+  void cleanData() {
+    jdbcTemplate.execute("DELETE FROM book");
+    jdbcTemplate.execute("DELETE FROM reader");
+  }
 
   @Test
   void saveAndFindById() {
@@ -28,7 +41,6 @@ class BookDaoIT extends IntegrationTestBase {
         () -> assertThat(actualBook.get().getName()).isEqualTo(bookToSave.getName()),
         () -> assertThat(actualBook.get().getAuthor()).isEqualTo(bookToSave.getAuthor()));
   }
-
   @Test
   void findAll() {
     var book1 = bookDao.save(generateBook("Test1", "Test1"));
@@ -109,16 +121,14 @@ class BookDaoIT extends IntegrationTestBase {
     bookDao.returnBook(book.getId());
     Optional<Book> returnedBook = bookDao.findById(book.getId());
 
-    assertThat(returnedBook.get().getReaderId()).isEqualTo(0);
+    assertThat(returnedBook.get().getReaderId()).isNull();
   }
 
   private static Book generateBook(String name, String author) {
-    var book = new Book(name, author);
-    return book;
+    return new Book(name, author);
   }
 
   private static Reader generateReader(String name) {
-    var reader = new Reader(name);
-    return reader;
+    return new Reader(name);
   }
 }

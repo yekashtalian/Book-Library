@@ -6,10 +6,14 @@ import static org.mockito.Mockito.*;
 
 import com.example.booklibrary.dao.BookDao;
 import com.example.booklibrary.dao.ReaderDao;
+import com.example.booklibrary.dto.BookWithReaderDto;
+import com.example.booklibrary.dto.ReaderWithBooksDto;
 import com.example.booklibrary.entity.Book;
 import com.example.booklibrary.entity.Reader;
 import com.example.booklibrary.exception.LibraryServiceException;
 import java.util.*;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +34,7 @@ class LibraryServiceTest {
   @Test
   void findAllBooks() {
     List<Book> expectedBooks =
-        List.of(new Book(1, "X", "X"), new Book(2, "Y", "Y"), new Book(3, "Z", "Z"));
+        List.of(new Book(1L, "X", "X"), new Book(2L, "Y", "Y"), new Book(3L, "Z", "Z"));
 
     when(bookDao.findAll()).thenReturn(expectedBooks);
 
@@ -54,7 +58,7 @@ class LibraryServiceTest {
   @Test
   void findAllReader() {
     List<Reader> expectedReaders =
-        List.of(new Reader(1, "X"), new Reader(2, "Y"), new Reader(3, "Z"));
+        List.of(new Reader(1L, "X"), new Reader(2L, "Y"), new Reader(3L, "Z"));
     when(readerDao.findAll()).thenReturn(expectedReaders);
 
     List<Reader> actualReaders = libraryService.findAllReader();
@@ -75,13 +79,12 @@ class LibraryServiceTest {
 
   @Test
   void showCurrentReaderOfBook() {
-    var bookIdToCheck = "1";
     var bookId = 1L;
-    var expectedReader = new Reader(1, "Yevhenii");
+    var expectedReader = new Reader(1L, "Yevhenii");
     when(bookDao.findById(bookId)).thenReturn(Optional.of(new Book()));
     when(readerDao.findReaderByBookId(bookId)).thenReturn(Optional.of(expectedReader));
 
-    Optional<Reader> actualReader = libraryService.showCurrentReaderOfBook(bookIdToCheck);
+    Optional<Reader> actualReader = libraryService.showCurrentReaderOfBook(bookId);
 
     assertThat(actualReader).isPresent();
     assertThat(actualReader).get().isEqualTo(expectedReader);
@@ -89,14 +92,12 @@ class LibraryServiceTest {
 
   @Test
   void showCurrentReaderOfBookIfBookIsNotFound() {
-    var bookIdToCheck = "99999";
     var bookId = 99999L;
     when(bookDao.findById(bookId)).thenReturn(Optional.empty());
 
     var exception =
         assertThrows(
-            LibraryServiceException.class,
-            () -> libraryService.showCurrentReaderOfBook(bookIdToCheck));
+            LibraryServiceException.class, () -> libraryService.showCurrentReaderOfBook(bookId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo(BOOK_NOT_FOUND);
@@ -105,27 +106,25 @@ class LibraryServiceTest {
 
   @Test
   void showBorrowedBooks() {
-    var readerIdToCheck = "1";
     var readerId = 1L;
     List<Book> expectedBooks =
-        List.of(new Book(1, "X", "X"), new Book(2, "Y", "Y"), new Book(3, "Z", "Z"));
+        List.of(new Book(1L, "X", "X"), new Book(2L, "Y", "Y"), new Book(3L, "Z", "Z"));
     when(readerDao.findById(readerId)).thenReturn(Optional.of(new Reader()));
     when(bookDao.findAllByReaderId(readerId)).thenReturn(expectedBooks);
 
-    List<Book> actualBooks = libraryService.showBorrowedBooks(readerIdToCheck);
+    List<Book> actualBooks = libraryService.showBorrowedBooks(readerId);
 
     assertThat(actualBooks).isEqualTo(expectedBooks);
   }
 
   @Test
   void showBorrowedBooksIfReaderIsNotFound() {
-    var readerIdToCheck = "99999";
     var readerId = 99999L;
     when(readerDao.findById(readerId)).thenReturn(Optional.empty());
 
     var exception =
         assertThrows(
-            LibraryServiceException.class, () -> libraryService.showBorrowedBooks(readerIdToCheck));
+            LibraryServiceException.class, () -> libraryService.showBorrowedBooks(readerId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo(READER_NOT_FOUND);
@@ -134,26 +133,24 @@ class LibraryServiceTest {
 
   @Test
   void addNewReader() {
-    var readerName = "Yevhenii";
+    var reader = new Reader("Yevhenii");
 
-    libraryService.addNewReader(readerName);
+    libraryService.addNewReader(reader);
 
-    verify(readerDao).save(new Reader(readerName));
+    verify(readerDao).save(reader);
   }
 
   @Test
   void addNewBook() {
-    var bookName = "Martin Eden/Jack London";
-    String[] bookAndAuthor = {"Martin Eden", "Jack London"};
+    var book = new Book("Martin Eden", "Jack London");
 
-    libraryService.addNewBook(bookName);
+    libraryService.addNewBook(book);
 
-    verify(bookDao).save(new Book(bookAndAuthor[0], bookAndAuthor[1]));
+    verify(bookDao).save(book);
   }
 
   @Test
   void borrowBook() {
-    var bookIdAndReaderId = "1/1";
     var bookId = 1L;
     var readerId = 1L;
     var book = new Book(bookId, "Martin Eden", "Jack London");
@@ -162,20 +159,19 @@ class LibraryServiceTest {
     when(readerDao.findById(readerId)).thenReturn(Optional.of(reader));
     when(readerDao.findReaderByBookId(bookId)).thenReturn(Optional.empty());
 
-    libraryService.borrowBook(bookIdAndReaderId);
+    libraryService.borrowBook(bookId, readerId);
     verify(bookDao).borrow(bookId, readerId);
   }
 
   @Test
   void borrowBookIfBookIsNotFound() {
-    var bookIdAndReaderId = "99999/1";
     var bookId = 99999L;
     var readerId = 1L;
     when(bookDao.findById(bookId)).thenReturn(Optional.empty());
 
     var exception =
         assertThrows(
-            LibraryServiceException.class, () -> libraryService.borrowBook(bookIdAndReaderId));
+            LibraryServiceException.class, () -> libraryService.borrowBook(bookId, readerId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo(BOOK_NOT_FOUND);
@@ -185,7 +181,6 @@ class LibraryServiceTest {
 
   @Test
   void borrowBookIfReaderIsNotFound() {
-    var bookIdAndReaderId = "1/99999";
     var bookId = 1L;
     var readerId = 99999L;
     var book = new Book(bookId, "Martin Eden", "Jack London");
@@ -194,7 +189,7 @@ class LibraryServiceTest {
 
     var exception =
         assertThrows(
-            LibraryServiceException.class, () -> libraryService.borrowBook(bookIdAndReaderId));
+            LibraryServiceException.class, () -> libraryService.borrowBook(bookId, readerId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo(READER_NOT_FOUND);
@@ -203,7 +198,6 @@ class LibraryServiceTest {
 
   @Test
   void borrowBookIfBookIsBorrowed() {
-    var bookIdAndReaderId = "1/1";
     var bookId = 1L;
     var readerId = 1L;
     var book = new Book(bookId, "Martin Eden", "Jack London", readerId);
@@ -214,7 +208,7 @@ class LibraryServiceTest {
 
     var exception =
         assertThrows(
-            LibraryServiceException.class, () -> libraryService.borrowBook(bookIdAndReaderId));
+            LibraryServiceException.class, () -> libraryService.borrowBook(bookId, readerId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo("Cannot borrow already borrowed Book!");
@@ -223,80 +217,101 @@ class LibraryServiceTest {
 
   @Test
   void findAllReadersWithBooks() {
-    Map<Reader, List<Book>> expectedMap =
+    Map<Reader, List<Book>> expectedResult =
         Map.of(
-            new Reader(1, "X"),
-                List.of(new Book(1, "dummy", "dummy"), new Book(2, "dummy1", "dummy1")),
-            new Reader(2, "Y"), List.of(new Book(3, "dummy2", "dummy2")));
-    when(readerDao.findAllWithBooks()).thenReturn(expectedMap);
+            new Reader(1L, "X"),
+                List.of(new Book(1L, "dummy", "dummy"), new Book(2L, "dummy1", "dummy1")),
+            new Reader(2L, "Y"), List.of(new Book(3L, "dummy2", "dummy2")));
+    when(readerDao.findAllWithBooks()).thenReturn(expectedResult);
 
-    Map<Reader, List<Book>> actualMap = libraryService.findAllReadersWithBooks();
+    List<ReaderWithBooksDto> actualResult = libraryService.findAllReadersWithBooks();
 
-    assertThat(actualMap).isNotEmpty();
-    assertThat(actualMap).isEqualTo(expectedMap);
+    assertThat(actualResult).isNotEmpty();
+    assertThat(actualResult.size()).isEqualTo(2);
+
+    actualResult.forEach(
+        dto -> {
+          if (dto.getId() == 1L) {
+            assertThat(dto.getName()).isEqualTo("X");
+            assertThat(dto.getBooks().size()).isEqualTo(2);
+          } else {
+            assertThat(dto.getName()).isEqualTo("Y");
+            assertThat(dto.getBooks().size()).isEqualTo(1);
+          }
+        });
   }
 
   @Test
   void findAllReadersWithBooksIfMapIsEmpty() {
-    Map<Reader, List<Book>> expectedMap = new HashMap<>();
-    when(readerDao.findAllWithBooks()).thenReturn(expectedMap);
+    Map<Reader, List<Book>> expectedResult = new HashMap<>();
+    when(readerDao.findAllWithBooks()).thenReturn(expectedResult);
 
-    Map<Reader, List<Book>> actualMap = libraryService.findAllReadersWithBooks();
+    List<ReaderWithBooksDto> actualResult = libraryService.findAllReadersWithBooks();
 
-    assertThat(actualMap).isNotNull();
-    assertThat(actualMap).isEmpty();
+    assertThat(actualResult).isNotNull();
+    assertThat(actualResult).isEmpty();
   }
 
   @Test
   void findAllBooksWithReaders() {
-    Map<Book, Optional<Reader>> expectedMap =
+    Map<Book, Optional<Reader>> expectedResult =
         Map.of(
-            new Book(1, "dummy1", "dummy2"),
-            Optional.of(new Reader(1, "dummy")),
-            new Book(2, "dummy3", "dummy4"),
+            new Book(1L, "dummy1", "dummy2"),
+            Optional.of(new Reader("dummy")),
+            new Book(2L, "dummy3", "dummy4"),
             Optional.of(new Reader("dummy1")));
-    when(bookDao.findAllWithReaders()).thenReturn(expectedMap);
+    when(bookDao.findAllWithReaders()).thenReturn(expectedResult);
 
-    Map<Book, Optional<Reader>> actualMap = libraryService.findAllBooksWithReaders();
+    List<BookWithReaderDto> actualResult = libraryService.findAllBooksWithReaders();
 
-    assertThat(actualMap).isNotEmpty();
-    assertThat(actualMap).isEqualTo(expectedMap);
+    assertThat(actualResult).isNotEmpty();
+    assertThat(actualResult.size()).isEqualTo(expectedResult.size());
+
+    actualResult.forEach(
+        dto -> {
+          if (dto.getId() == 1L) {
+            assertThat(dto.getName()).isEqualTo("dummy1");
+            assertThat(dto.getAuthor()).isEqualTo("dummy2");
+            assertThat(dto.getReader().getName()).isEqualTo("dummy");
+          } else {
+            assertThat(dto.getName()).isEqualTo("dummy3");
+            assertThat(dto.getAuthor()).isEqualTo("dummy4");
+            assertThat(dto.getReader().getName()).isEqualTo("dummy1");
+          }
+        });
   }
 
   @Test
   void findAllBooksWithReadersIfMapIsEmpty() {
-    Map<Book, Optional<Reader>> expectedMap = new HashMap<>();
-    when(bookDao.findAllWithReaders()).thenReturn(expectedMap);
+    Map<Book, Optional<Reader>> expectedResult = new HashMap<>();
+    when(bookDao.findAllWithReaders()).thenReturn(expectedResult);
 
-    Map<Book, Optional<Reader>> actualMap = libraryService.findAllBooksWithReaders();
+    List<BookWithReaderDto> actualResult = libraryService.findAllBooksWithReaders();
 
-    assertThat(actualMap).isNotNull();
-    assertThat(actualMap).isEmpty();
+    assertThat(actualResult).isNotNull();
+    assertThat(actualResult).isEmpty();
   }
 
   @Test
   void returnBookToLibrary() {
-    var bookIdToReturn = "1";
     var bookId = 1L;
     var reader = new Reader(1L, "Yevhenii");
     var book = new Book(bookId, "Martin Eden", "Jack London", reader.getId());
     when(bookDao.findById(bookId)).thenReturn(Optional.of(book));
     when(readerDao.findReaderByBookId(bookId)).thenReturn(Optional.of(reader));
 
-    libraryService.returnBookToLibrary(bookIdToReturn);
+    libraryService.returnBookToLibrary(bookId);
     verify(bookDao).returnBook(bookId);
   }
 
   @Test
   void returnBookToLibraryIfBookDoesNotExists() {
-    var bookIdToReturn = "99999";
     var bookId = 99999L;
     when(bookDao.findById(bookId)).thenReturn(Optional.empty());
 
     var exception =
         assertThrows(
-            LibraryServiceException.class,
-            () -> libraryService.returnBookToLibrary(bookIdToReturn));
+            LibraryServiceException.class, () -> libraryService.returnBookToLibrary(bookId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage()).isEqualTo(BOOK_NOT_FOUND);
@@ -306,7 +321,6 @@ class LibraryServiceTest {
 
   @Test
   void returnBookToLibraryIfBookIsInLibrary() {
-    var bookIdToReturn = "1";
     var bookId = 1L;
     var book = new Book(bookId, "Martin Eden", "Jack London");
     when(bookDao.findById(bookId)).thenReturn(Optional.of(book));
@@ -314,8 +328,7 @@ class LibraryServiceTest {
 
     var exception =
         assertThrows(
-            LibraryServiceException.class,
-            () -> libraryService.returnBookToLibrary(bookIdToReturn));
+            LibraryServiceException.class, () -> libraryService.returnBookToLibrary(bookId));
 
     assertThat(exception.getClass()).isEqualTo(LibraryServiceException.class);
     assertThat(exception.getMessage())

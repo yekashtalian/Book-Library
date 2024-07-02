@@ -61,7 +61,7 @@ public class BookDaoImpl implements BookDao {
   @Override
   public Optional<Book> findById(long bookId) {
     var query =
-        "SELECT id AS bookId, name AS bookName, author AS bookAuthor, reader_id FROM book WHERE id = ?";
+        "SELECT id, name, author, reader_id FROM book WHERE id = ?";
     try {
       //noinspection DataFlowIssue
       return Optional.of(

@@ -55,7 +55,7 @@ public class DaoUtils {
       book.setId(resultSet.getLong("bookId"));
       book.setName(resultSet.getString("bookName"));
       book.setAuthor(resultSet.getString("bookAuthor"));
-      book.setReaderId(resultSet.getLong("reader_id"));
+      book.setReaderId(resultSet.getObject("readerId", Long.class));
       return book;
     } catch (SQLException e) {
       throw new DaoOperationException("Cannot parse row to create book instance", e);
